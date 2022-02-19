@@ -37,6 +37,8 @@
 
 #include <time.h>
 
+#include <dr_api.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -56,6 +58,9 @@ hypre_int
 main( hypre_int argc,
       char *argv[] )
 {
+
+   dr_app_setup_and_start();
+
    HYPRE_Int           arg_index;
    HYPRE_Int           print_usage;
    HYPRE_Int           build_rhs_type;
@@ -594,6 +599,8 @@ main( hypre_int argc,
   hypre_FinalizeMemoryDebug();
 */
    hypre_MPI_Finalize();
+
+   dr_app_stop_and_cleanup();
 
    return (0);
 }
