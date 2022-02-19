@@ -110,7 +110,7 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
    if (alpha == 0.0)
    {
 #ifdef HYPRE_USING_OPENMP
-#pragma omp parallel for private(i) HYPRE_SMP_SCHEDULE
+#pragma omp parallel for simd
 #endif
       for (i = 0; i < num_rows*num_vectors; i++)
          y_data[i] = beta*b_data[i];
@@ -147,7 +147,7 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
          if (temp == 0.0)
          {
 #ifdef HYPRE_USING_OPENMP
-#pragma omp parallel for private(i) HYPRE_SMP_SCHEDULE
+#pragma omp parallel for simd private(i) HYPRE_SMP_SCHEDULE
 #endif
             for (i = 0; i < num_rows*num_vectors; i++)
                y_data[i] = 0.0;
@@ -155,7 +155,7 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
          else
          {
 #ifdef HYPRE_USING_OPENMP
-#pragma omp parallel for private(i) HYPRE_SMP_SCHEDULE
+#pragma omp parallel for simd private(i) HYPRE_SMP_SCHEDULE
 #endif
             for (i = 0; i < num_rows*num_vectors; i++)
                y_data[i] = b_data[i]*temp;
@@ -163,6 +163,9 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
       }
       else
       {
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd
+#endif
             for (i = 0; i < num_rows*num_vectors; i++)
                y_data[i] = b_data[i];
       }
@@ -231,7 +234,7 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
       if (alpha != 1.0)
       {
 #ifdef HYPRE_USING_OPENMP
-#pragma omp parallel for private(i) HYPRE_SMP_SCHEDULE
+#pragma omp parallel for simd private(i) HYPRE_SMP_SCHEDULE
 #endif
          for (i = 0; i < num_rows*num_vectors; i++)
             y_data[i] *= alpha;
@@ -239,9 +242,6 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
    }
    else
    { // JSP: this is currently the only path optimized
-#ifdef HYPRE_USING_OPENMP
-#pragma omp parallel private(i,jj,tempx)
-#endif
       {
       HYPRE_Int iBegin = hypre_CSRMatrixGetLoadBalancedPartitionBegin(A);
       HYPRE_Int iEnd = hypre_CSRMatrixGetLoadBalancedPartitionEnd(A);
@@ -253,9 +253,15 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
       {
          if (1 == alpha) // JSP: a common path
          {
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd lastprivate(tempx)
+#endif
             for (i = iBegin; i < iEnd; i++)
             {
                tempx = 0.0;
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd
+#endif
                for (jj = A_i[i]; jj < A_i[i+1]; jj++)
                {
                   tempx += A_data[jj] * x_data[A_j[jj]];
@@ -265,9 +271,15 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
          } // y = A*x
          else if (-1 == alpha)
          {
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd lastprivate(tempx)
+#endif
             for (i = iBegin; i < iEnd; i++)
             {
                tempx = 0.0;
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd
+#endif
                for (jj = A_i[i]; jj < A_i[i+1]; jj++)
                {
                   tempx -= A_data[jj] * x_data[A_j[jj]];
@@ -277,9 +289,15 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
          } // y = -A*x
          else
          {
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd lastprivate(tempx)
+#endif
             for (i = iBegin; i < iEnd; i++)
             {
                tempx = 0.0;
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd
+#endif
                for (jj = A_i[i]; jj < A_i[i+1]; jj++)
                {
                   tempx += A_data[jj] * x_data[A_j[jj]];
@@ -292,9 +310,15 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
       {
          if (1 == alpha) // JSP: a common path
          {
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd lastprivate(tempx)
+#endif
             for (i = iBegin; i < iEnd; i++)
             {
                tempx = -b_data[i];
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd
+#endif
                for (jj = A_i[i]; jj < A_i[i+1]; jj++)
                {
                   tempx += A_data[jj] * x_data[A_j[jj]];
@@ -304,9 +328,15 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
          } // y = A*x - y
          else if (-1 == alpha) // JSP: a common path
          {
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd lastprivate(tempx)
+#endif
             for (i = iBegin; i < iEnd; i++)
             {
                tempx = b_data[i];
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd
+#endif
                for (jj = A_i[i]; jj < A_i[i+1]; jj++)
                {
                   tempx -= A_data[jj] * x_data[A_j[jj]];
@@ -316,9 +346,15 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
          } // y = -A*x + y
          else
          {
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd lastprivate(tempx)
+#endif
             for (i = iBegin; i < iEnd; i++)
             {
                tempx = -b_data[i];
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd
+#endif
                for (jj = A_i[i]; jj < A_i[i+1]; jj++)
                {
                   tempx += A_data[jj] * x_data[A_j[jj]];
@@ -331,9 +367,15 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
       {
          if (1 == alpha) // JSP: a common path
          {
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd lastprivate(tempx)
+#endif
             for (i = iBegin; i < iEnd; i++)
             {
                tempx = b_data[i];
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd
+#endif
                for (jj = A_i[i]; jj < A_i[i+1]; jj++)
                {
                   tempx += A_data[jj] * x_data[A_j[jj]];
@@ -343,9 +385,15 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
          } // y = A*x + y
          else if (-1 == alpha)
          {
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd lastprivate(tempx)
+#endif
             for (i = iBegin; i < iEnd; i++)
             {
                tempx = -b_data[i];
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd
+#endif
                for (jj = A_i[i]; jj < A_i[i+1]; jj++)
                {
                   tempx -= A_data[jj] * x_data[A_j[jj]];
@@ -355,9 +403,15 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
          } // y = -A*x - y
          else
          {
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd lastprivate(tempx)
+#endif
             for (i = iBegin; i < iEnd; i++)
             {
                tempx = b_data[i];
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd
+#endif
                for (jj = A_i[i]; jj < A_i[i+1]; jj++)
                {
                   tempx += A_data[jj] * x_data[A_j[jj]];
@@ -370,9 +424,15 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
       {
          if (1 == alpha) // JSP: a common path
          {
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd lastprivate(tempx)
+#endif
             for (i = iBegin; i < iEnd; i++)
             {
                tempx = b_data[i]*temp;
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd
+#endif
                for (jj = A_i[i]; jj < A_i[i+1]; jj++)
                {
                   tempx += A_data[jj] * x_data[A_j[jj]];
@@ -382,9 +442,15 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
          } // y = A*x + temp*y
          else if (-1 == alpha)
          {
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd lastprivate(tempx)
+#endif
             for (i = iBegin; i < iEnd; i++)
             {
                tempx = -b_data[i]*temp;
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd
+#endif
                for (jj = A_i[i]; jj < A_i[i+1]; jj++)
                {
                   tempx -= A_data[jj] * x_data[A_j[jj]];
@@ -394,9 +460,15 @@ hypre_CSRMatrixMatvecOutOfPlace( HYPRE_Complex    alpha,
          } // y = -A*x - temp*y
          else
          {
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd lastprivate(tempx)
+#endif
             for (i = iBegin; i < iEnd; i++)
             {
                tempx = b_data[i]*temp;
+#ifdef HYPRE_USING_OPENMP
+#pragma omp simd
+#endif
                for (jj = A_i[i]; jj < A_i[i+1]; jj++)
                {
                   tempx += A_data[jj] * x_data[A_j[jj]];
@@ -549,10 +621,6 @@ hypre_CSRMatrixMatvecT( HYPRE_Complex    alpha,
 
       if ( num_vectors==1 )
       {
-
-#ifdef HYPRE_USING_OPENMP
-#pragma omp parallel private(i,jj,j,my_thread_num,offset)
-#endif
          {                                      
             my_thread_num = hypre_GetThreadNum();
             offset =  y_size*my_thread_num;
